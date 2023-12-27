@@ -30,12 +30,12 @@ datagen = ImageDataGenerator( samplewise_center=True,
                              validation_split=0.25)#split data, 75% for training and 25% for testing
 
 #splitting data
-train_data=datagen.flow_from_directory(augmented_dir,
+train_data=datagen.flow_from_directory(data,
                                        target_size=(img_w,img_h),
                                        batch_size=batch_size,
                                        class_mode='binary', #for two classes train and testing
                                        shuffle=True,subset='training')
-test_data=datagen.flow_from_directory(augmented_dir,
+test_data=datagen.flow_from_directory(data,
                                        target_size=(img_w,img_h),
                                        batch_size=batch_size,
                                       class_mode='binary',
