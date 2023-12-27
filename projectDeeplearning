@@ -1,0 +1,206 @@
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from keras.preprocessing import image
+from keras.preprocessing.image import ImageDataGenerator
+from keras.layers import Dense,Flatten,Dropout,Conv2D,MaxPooling2D,BatchNormalization,GlobalAveragePooling2D
+from keras.models import Sequential
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from keras.applications.vgg16 import VGG16
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from PIL import Image
+from keras.callbacks import EarlyStopping
+#reading data from kaggle ,#**Data and Get the Labels of it**
+data="/kaggle/input/satellite-image-classification/data"
+data_labels=os.listdir(data)
+#traget and batch size
+img_w=100 
+img_h =100
+batch_size=32
+#data preprocessing
+datagen = ImageDataGenerator( samplewise_center=True, 
+                             rotation_range=20,  
+                             zoom_range = 0.1, 
+                             height_shift_range=0.1,  
+                             horizontal_flip=True,
+                             vertical_flip=False,
+                             rescale=1./255,#scale images
+                             validation_split=0.25)#split data, 75% for training and 25% for testing
+
+#splitting data
+train_data=datagen.flow_from_directory(augmented_dir,
+                                       target_size=(img_w,img_h),
+                                       batch_size=batch_size,
+                                       class_mode='binary', #for two classes train and testing
+                                       shuffle=True,subset='training')
+test_data=datagen.flow_from_directory(augmented_dir,
+                                       target_size=(img_w,img_h),
+                                       batch_size=batch_size,
+                                      class_mode='binary',
+                                       shuffle=False,subset='validation')
+#VGG16 layer
+VGG16_model = VGG16(weights="imagenet", include_top=False, input_shape=(img_h,img_w,3))
+VGG16_model.trainable = False
+VGG_model_model = Sequential([
+  VGG16_model_model,
+    Flatten(name='Flatten_Layer'),
+    BatchNormalization(name='Batchnormalization_Layer_1'),
+    Dense(units=512,activation='relu',name='Dense_Layer_1',use_bias=False),
+    Dropout(0.2),
+    Dense(units=256,activation='relu',name='Dense_Layer_2',use_bias=False),
+    BatchNormalization(name='Batchnormalization_Layer_2'),
+    Dropout(0.2),
+    Dense(units=128,activation='relu',name='Dense_Layer_3',use_bias=False),
+    Dropout(0.2),
+    Dense(units=64,activation='relu',name='Dense_Layer_4',use_bias=False),
+    Dropout(0.2),
+    Dense(units=4,activation='softmax',name='VGG16_model'+'_Output_Layer'),
+],name='VGG16_model'+'_Model')
+
+VGG_model.summary()
+# using learning rate and early stop to reduce hapenned  over fitting
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+VGG_model.compile(optimizer = optimizer,loss = 'sparse_categorical_crossentropy',metrics = ['accuracy'])
+model=VGG_model.fit(train_generator, validation_data=(test_data),epochs=50, callbacks= [early_stopping],batch_size=32)
+def plot_hist(model):
+    fig, axs = plt.subplots(1, 2, figsize=(12, 5)) # create a figure with 1 row and 2 columns
+
+
+    # plot loss for training and validation sets
+    axs[0].plot(model.history["loss"])
+    axs[0].plot(model.history["val_loss"])
+    axs[0].set_title("model VGG16 loss")
+    axs[0].set_ylabel("loss")
+    axs[0].set_xlabel("epoch")
+    axs[0].legend(["train", "validation"], loc="upper left")
+
+    # plot accuracy for training and validation sets
+    axs[1].plot(model.history["accuracy"])
+    axs[1].plot(model.history["val_accuracy"])
+    axs[1].set_title("model  VGG16 accuracy")
+    axs[1].set_ylabel("accuracy")
+    axs[1].set_xlabel("epoch")
+    axs[1].legend(["train", "validation"], loc="upper left")
+
+
+    plt.show()
+plot_hist(model)
+#y_true and y_pred for vgg
+y_true = np.array([])
+y_pred = np.array([])
+
+i = 0
+for data,data_labels in test_data:
+    i += 1
+    y = np.argmax(VGG_model.predict(data), axis=1)
+    y_true = np.append(y_true, data_labels)
+    y_pred = np.append(y_pred, y)
+    if i == test_data.samples // batch_size + 1:
+        break
+#VGG operation
+accuracy = accuracy_score(y_true, y_pred)
+precision = precision_score(y_true, y_pred, average='micro')
+recall = recall_score(y_true, y_pred, average='micro')
+f1 = f1_score(y_true, y_pred, average='micro')
+
+print('Accuracy of VGG16 Model:', accuracy)
+print('Precision  of VGG16 Model:', precision)
+print('Recall  of VGG16 Model:', recall)
+print('F1 score  of VGG16 Model:', f1)
+
+import seaborn as sns
+import pandas as pd
+#conv matrix for VGG16
+# Calculate confusion matrix as before
+conm = confusion_matrix(y_true, y_pred)
+table_convm = pd.DataFrame(conm, index =["cloud","desert" ,'green_area', 'water'],columns =["cloud","desert" ,'green_area', 'water'])
+# Create heatmap with Seaborn
+sns.heatmap(table_convm, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix VGG16 MODEL")
+plt.show()
+
+from tensorflow.keras.applications import InceptionV3
+
+inception_model = InceptionV3(weights="imagenet", include_top=False, input_shape=(img_h,img_w,3))
+
+inception_model.trainable = False
+
+inceptionv_model = Sequential([
+  inception_model,
+    Flatten(name='Flatten_Layer'),
+    BatchNormalization(name='Batchnormalization_Layer_1'),
+    Dense(units=512,activation='relu',name='Dense_Layer_1',use_bias=False),
+    Dropout(0.2),
+    Dense(units=256,activation='relu',name='Dense_Layer_2',use_bias=False),
+    BatchNormalization(name='Batchnormalization_Layer_2'),
+    Dropout(0.2),
+    Dense(units=128,activation='relu',name='Dense_Layer_3',use_bias=False),
+    Dropout(0.2),
+    Dense(units=64,activation='relu',name='Dense_Layer_4',use_bias=False),
+    Dropout(0.2),
+    Dense(units=4,activation='softmax',name='InceptionV3'+'_Output_Layer'),
+],name='InceptionV3'+'_Model')
+
+
+inceptionv_model.summary()
+#fitting inception
+in_model=  inceptionv_model.fit(train_data, validation_data=(test_data),epochs=100, callbacks= [early_stopping],batch_size=32)
+def plot_hist(re_model):
+    fig, axs = plt.subplots(1, 2, figsize=(12, 5)) # create a figure with 1 row and 2 columns
+
+
+    # plot loss for training and validation sets
+    axs[0].plot(re_model.history["loss"])
+    axs[0].plot(re_model.history["val_loss"])
+    axs[0].set_title("model InceptionV3 loss")
+    axs[0].set_ylabel("loss")
+    axs[0].set_xlabel("epoch")
+    axs[0].legend(["train", "validation"], loc="upper left")
+
+    # plot accuracy for training and validation sets
+    axs[1].plot(re_model.history["accuracy"])
+    axs[1].plot(re_model.history["val_accuracy"])
+    axs[1].set_title("model InceptionV3 accuracy")
+    axs[1].set_ylabel("accuracy")
+    axs[1].set_xlabel("epoch")
+    axs[1].legend(["train", "validation"], loc="upper left")
+
+
+    plt.show()
+plot_hist(in_model)
+#y_true and y_pred for inception model
+y_true_IN = np.array([])
+y_pred_IN = np.array([])
+
+i = 0
+for data,data_labels in test_data:
+    i += 1
+    y_IN = np.argmax(inceptionv_model.predict(data), axis=1)
+    y_true_IN = np.append(y_true_IN, data_labels)
+    y_pred_IN = np.append(y_pred_IN, y_IN)
+    if i == test_data.samples // batch_size + 1:
+        break
+inceptionv_model.evaluate(test_data)
+#operation 
+accuracy_re = accuracy_score( y_true_IN,y_pred_IN)
+precision_re = precision_score( y_true_IN,y_pred_IN, average='micro')
+recall_re= recall_score( y_true_IN, y_pred_IN, average='micro')
+f1_re = f1_score( y_true_IN, y_pred_IN, average='micro')
+
+print('Accuracy of Invection Model:', accuracy_re)
+print('Precision of Invection Model :', precision_re)
+print('Recall of Invection Model:', recall_re)
+print('F1 score of Invection Model:', f1_re)
+# Calculate confusion matrix as before
+conm_re = confusion_matrix( y_true_IN, y_pred_IN)
+table_convm_re = pd.DataFrame(conm_re, index =["cloud","desert" ,'green_area', 'water'],columns =["cloud","desert" ,'green_area', 'water'])
+# Create heatmap with Seaborn
+sns.heatmap(table_convm_re, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted Label ")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix Invection Model")
+plt.show()
