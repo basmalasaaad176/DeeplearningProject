@@ -43,8 +43,8 @@ test_data=datagen.flow_from_directory(data,
 #VGG16 layer
 VGG16_model = VGG16(weights="imagenet", include_top=False, input_shape=(img_h,img_w,3))
 VGG16_model.trainable = False
-VGG_model_model = Sequential([
-  VGG16_model_model,
+VGG_model = Sequential([
+  VGG16_model,
     Flatten(name='Flatten_Layer'),
     BatchNormalization(name='Batchnormalization_Layer_1'),
     Dense(units=512,activation='relu',name='Dense_Layer_1',use_bias=False),
@@ -63,7 +63,7 @@ VGG_model.summary()
 # using learning rate and early stop to reduce hapenned  over fitting
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 VGG_model.compile(optimizer = optimizer,loss = 'sparse_categorical_crossentropy',metrics = ['accuracy'])
-model=VGG_model.fit(train_generator, validation_data=(test_data),epochs=50, callbacks= [early_stopping],batch_size=32)
+model=VGG_model.fit(train_data, validation_data=(test_data),epochs=50, callbacks= [early_stopping],batch_size=32)
 def plot_hist(model):
     fig, axs = plt.subplots(1, 2, figsize=(12, 5)) # create a figure with 1 row and 2 columns
 
