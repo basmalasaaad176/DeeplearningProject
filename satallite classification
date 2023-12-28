@@ -16,8 +16,8 @@ from keras.callbacks import EarlyStopping
 data="/kaggle/input/satellite-image-classification/data"
 data_labels=os.listdir(data)
 #traget and batch size
-img_w=100 
-img_h =100
+img_w=150 
+img_h =150
 batch_size=32
 #data preprocessing
 datagen = ImageDataGenerator( samplewise_center=True, 
@@ -125,13 +125,13 @@ plt.show()
 
 from tensorflow.keras.applications import InceptionV3
 
-inception_model = InceptionV3(weights="imagenet", include_top=False, input_shape=(img_h,img_w,3))
+inception_model = InceptionV3(weights="imagenet", include_top=False, input_shape=(192,192,3))
 
 inception_model.trainable = False
 
 inceptionv_model = Sequential([
   inception_model,
-    Flatten(name='Flatten_Layer'),
+    GlobalAveragePooling2D(name='GlobalAveragePooling2D_Layer'),
     BatchNormalization(name='Batchnormalization_Layer_1'),
     Dense(units=512,activation='relu',name='Dense_Layer_1',use_bias=False),
     Dropout(0.2),
