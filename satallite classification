@@ -125,7 +125,7 @@ plt.show()
 
 from tensorflow.keras.applications import InceptionV3
 
-inception_model = InceptionV3(weights="imagenet", include_top=False, input_shape=(192,192,3))
+inception_model = InceptionV3(weights="imagenet", include_top=False, input_shape=(img_w,img_h,3))
 
 inception_model.trainable = False
 
